@@ -5,9 +5,9 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "build": "react-scripts build",
-    "test": "react-scripts test"
+    "server": "nodemon server.js",
+    "start": "nodemon server.js",
+    "build": "babel server.js -d dist"
   },
   "keywords": [],
   "author": "frederic zai",
