@@ -1,8 +1,11 @@
-name: youtube-to-playlist
-env:
-  NODE_ENV: production
-build:
-  command: npm ci && npm run build
-  publish: ./build
-start:
-  command: npm run start
+services:
+  - type: web
+    name: youtube-to-playlist
+    env: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    staticPublishPath: build
