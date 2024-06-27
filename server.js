@@ -8,7 +8,7 @@ import app from './app/app.js'
 
 const server = http.createServer(app)
 
-const port = 3100;
+const port = 3200;
 const hostname = 'localhost';
 
 server.listen(port, console.log(`port is listening on port :${port}/`))
