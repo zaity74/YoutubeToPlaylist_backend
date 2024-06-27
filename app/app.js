@@ -23,23 +23,23 @@ dbConnect();
 
 
 const allowedOrigins = [
-    'http://localhost:3001'
-  ];
-  
-  const corsOptions = {
-    origin: function (origin, callback) {
-      // Check if the origin is allowed
-      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    methods: 'GET, POST, PUT, DELETE',
-    allowedHeaders: 'Content-Type, Authorization',
-    credentials: true,
-  };
+  'https://youtubetoplaylist.netlify.app',
+  'http://localhost:3100'
+];
 
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Check if the origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: 'GET, POST, PUT, DELETE',
+  allowedHeaders: 'Content-Type, Authorization',
+  credentials: true,
+};
 
 app.use(cors(corsOptions));
 
