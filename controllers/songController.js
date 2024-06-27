@@ -13,82 +13,86 @@ const __dirname = path.dirname(__filename);
 
 export const createSong = asyncHandler(async (req, res) => {
   //  GET user ID & CHECK IF HE IS LOGIN
-    const userId = req.userAuthId; 
-  
-    if (!userId) {
-      return res.status(401).json({
-        status: 'fail',
-        message: 'You need to be logged in to remove product from the song. Please log in or create an account.'
-      });
+  const userId = req.userAuthId;
+
+  if (!userId) {
+    return res.status(401).json({
+      status: 'fail',
+      message: 'You need to be logged in to remove product from the song. Please log in or create an account.'
+    });
+  }
+
+  // Récupérer l'URL de la requête body
+  const { url, description, genre } = req.body;
+
+  // Vérification de l'URL
+  if (!url || !ytdl.validateURL(url)) {
+    return res.status(400).json({
+      error: 'Invalid URL'
+    });
+  }
+
+  try {
+    // Récupérer les infos de la vidéo comme le titre
+    const info = await ytdl.getInfo(url);
+    const title = info.videoDetails.title;
+    const thumbnail = info.videoDetails.thumbnails[0].url;
+    const artist = info.videoDetails.author.name;
+    const duration = info.videoDetails.lengthSeconds;
+    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+
+    // Définir le chemin du fichier mp3
+    const outputDir = path.resolve(__dirname, '..', 'downloads');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir);
     }
+    const output = path.resolve(outputDir, `${title}.mp3`);
 
-    // Récupérer l'URL de la requête body
-    const { url, description, genre } = req.body;
-
-    // Vérification de l'URL
-    if (!url || !ytdl.validateURL(url)) {
-        return res.status(400).json({
-            error: 'Invalid URL'
+    // Télécharger et convertir la vidéo en MP3
+    const stream = ytdl(url, { filter: 'audioonly' });
+    ffmpeg.setFfmpegPath('C:\\ProgramData\\chocolatey\\bin\\ffmpeg.exe'); // Chemin vers ffmpeg
+    ffmpeg(stream)
+      .audioBitrate(128)
+      .save(output)
+      .on('end', async () => {
+        // Créer un document Song
+        const newSong = new Song({
+          name: title,
+          description,
+          genre,
+          artiste: artist,
+          file: `http://localhost:3100/downloads/${title}.mp3`, // Utiliser l'URL publique
+          thumbnail,
+          url,
+          duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
+          user: userId,
         });
+
+        // Sauvegarder le document Song dans la base de données
+        const songCreated = await newSong.save();
+
+        // Envoyer une réponse
+        res.status(201).json({
+          status: 'success',
+          msg: 'Song created successfully',
+          data: songCreated
+        });
+
+        // Optionnel: Supprimer le fichier MP3 du serveur après la réponse
+        // await unlinkAsync(outputPath);
+      })
+      .on('error', (err) => {
+        console.error('Conversion error:', err);
+        res.status(500).json({ error: 'Download or conversion failed', details: err });
+      });
+  } catch (error) {
+    console.error('Processing error:', error);
+    if (error.statusCode === 410) {
+      res.status(410).json({ error: 'The video is no longer available (410 Gone).' });
+    } else {
+      res.status(500).json({ error: 'Processing failed', details: error });
     }
-
-    try {
-        // Récupérer les infos de la vidéo comme le titre
-        const info = await ytdl.getInfo(url);
-        const title = info.videoDetails.title;
-        const thumbnail = info.videoDetails.thumbnails[0].url;
-        const artist = info.videoDetails.author.name;
-        const duration = info.videoDetails.lengthSeconds;
-        const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
-
-        // Définir le chemin du fichier mp3
-        const outputDir = path.resolve(__dirname, '..', 'downloads');
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir);
-        }
-        const output = path.resolve(outputDir, `${title}.mp3`);
-
-        // Télécharger et convertir la vidéo en MP3
-        const stream = ytdl(url, { filter: 'audioonly' });
-        ffmpeg.setFfmpegPath('C:\\ProgramData\\chocolatey\\bin\\ffmpeg.exe'); // Chemin vers ffmpeg
-        ffmpeg(stream)
-            .audioBitrate(128)
-            .save(output)
-            .on('end', async () => {
-                // Créer un document Song
-                const newSong = new Song({
-                    name: title,
-                    description,
-                    genre,
-                    artiste: artist,
-                    file: `http://localhost:3100/downloads/${title}.mp3`, // Utiliser l'URL publique
-                    thumbnail,
-                    url,
-                    duration: `${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`, 
-                    user: userId,
-                });
-
-                // Sauvegarder le document Song dans la base de données
-                const songCreated = await newSong.save();
-
-                // Envoyer une réponse
-                res.status(201).json({
-                    status: 'success',
-                    msg: 'Song created successfully',
-                    data: songCreated
-                });
-
-                // Optionnel: Supprimer le fichier MP3 du serveur après la réponse
-                // await unlinkAsync(outputPath);
-            })
-            .on('error', (err) => {
-                console.error('Conversion error:', err);
-                res.status(500).json({ error: 'Download or conversion failed', details: err });
-            });
-    } catch (error) {
-        console.error('Processing error:', error);
-        res.status(500).json({ error: 'Processing failed', details: error });
-    }
+  }
 });
 
 // FETCH ALL
