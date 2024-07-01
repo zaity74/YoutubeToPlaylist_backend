@@ -24,7 +24,8 @@ dbConnect();
 
 const allowedOrigins = [
   'https://youtubetoplaylist.netlify.app',
-  'http://localhost:3001'
+  'http://localhost:3001', 
+  'http://localhost:3000',
 ];
 
 const corsOptions = {
