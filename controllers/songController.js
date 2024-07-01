@@ -61,12 +61,15 @@ export const createSong = asyncHandler(async (req, res) => {
     }
     const output = path.resolve(outputDir, `${title}.mp3`);
 
+    console.log(output);
+
     // Télécharger et convertir la vidéo en MP3
     const stream = ytdl(url, { filter: "audioonly" });
     ffmpeg(stream)
       .audioBitrate(128)
       .save(output)
       .on("end", async () => {
+        console.log(`File saved at: ${output}`);
         // Créer un document Song
         const newSong = new Song({
           name: title,
@@ -112,6 +115,8 @@ export const createSong = asyncHandler(async (req, res) => {
     }
   }
 });
+
+
 // FETCH ALL
 export const getAllSongs = asyncHandler(async (req, res) => {
   // Récupérer l'ID de l'utilisateur authentifié
