@@ -76,7 +76,7 @@ export const createSong = asyncHandler(async (req, res) => {
           description,
           genre,
           artiste: artist,
-          file: `http://localhost:3100/downloads/${title}.mp3`, // Utiliser l'URL publique
+          file: `/opt/render/project/src/downloads/${title}.mp3`, // Utiliser l'URL publique
           thumbnail,
           url,
           duration: `${Math.floor(duration / 60)}:${(duration % 60)
